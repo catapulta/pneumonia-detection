@@ -203,7 +203,14 @@ class Darknet(nn.Module):
                         own_state[name].copy_(param)
                     return net
 
+                def dfs_freeze(model):
+                    for name, child in model.named_children():
+                        for param in child.parameters():
+                            param.requires_grad = False
+                        dfs_freeze(child)
+
                 model = FeatureDenseNet121()
+                dfs_freeze(model)
                 self.pretrained_path = block['pretrained_path']
                 gpu = None if torch.cuda.is_available() else 'cpu'
                 checkpoint = torch.load(self.pretrained_path, map_location=gpu)

@@ -135,7 +135,7 @@ def main():
         else:
             params += [{'params': [value], 'weight_decay': decay * batch_size}]
     global optimizer
-    optimizer = optim.SGD(model.parameters(),
+    optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
                           lr=learning_rate / batch_size, momentum=momentum,
                           dampening=0, weight_decay=decay * batch_size)
 
