@@ -1,0 +1,5 @@
+train  = data/train.txt
+valid  = data/test.txt
+names = data/chexdet.names
+backup = backup
+gpus  = 0,1,2,3
