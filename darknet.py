@@ -7,6 +7,7 @@ import numpy as np
 from region_layer import RegionLayer
 from yolo_layer import YoloLayer
 #from layers.batchnorm.bn import BN2d
+import torchvision
 
 class MaxPoolStride1(nn.Module):
     def __init__(self):
@@ -121,9 +122,11 @@ class Darknet(nn.Module):
         outno = 0
         for block in self.blocks:
             ind = ind + 1
-
             if block['type'] == 'net':
                 continue
+            elif block['type'] == 'densenet':
+                x = self.models[ind](x)
+                outputs[ind] = x
             elif block['type'] in ['convolutional', 'maxpool', 'reorg', 'upsample', 'avgpool', 'softmax', 'connected']:
                 x = self.models[ind](x)
                 outputs[ind] = x
@@ -149,7 +152,7 @@ class Darknet(nn.Module):
                 elif activation == 'relu':
                     x = F.relu(x, inplace=True)
                 outputs[ind] = x
-            elif block['type'] in [ 'region', 'yolo']:
+            elif block['type'] in ['region', 'yolo']:
                 boxes = self.models[ind].get_mask_boxes(x)
                 out_boxes[outno]= boxes
                 outno += 1
@@ -179,6 +182,40 @@ class Darknet(nn.Module):
                 self.width = int(block['width'])
                 self.height = int(block['height'])
                 continue
+            elif block['type'] == 'densenet':
+                class FeatureDenseNet121(nn.Module):
+                    def __init__(self):
+                        super(FeatureDenseNet121, self).__init__()
+                        self.densenet121 = torchvision.models.densenet121()
+
+                    def forward(self, x):
+                        x = self.densenet121.features(x)
+                        return x
+
+                def load_my_state_dict(net, state_dict):
+                    own_state = net.state_dict()
+                    for name, param in state_dict.items():
+                        if name not in own_state:
+                            continue
+                        if isinstance(param, nn.Parameter):
+                            # backwards compatibility for serialized parameters
+                            param = param.data
+                        own_state[name].copy_(param)
+                    return net
+
+                model = FeatureDenseNet121()
+                self.pretrained_path = block['pretrained_path']
+                gpu = None if torch.cuda.is_available() else 'cpu'
+                checkpoint = torch.load(self.pretrained_path, map_location=gpu)
+                load_my_state_dict(model, checkpoint)
+                print("=> loaded chexnet weights")
+                prev_filters = int(block['filters'])
+                stride = int(block['stride'])
+                out_filters.append(prev_filters)
+                prev_stride = stride * prev_stride
+                out_strides.append(prev_stride)
+                models.append(model)
+
             elif block['type'] == 'convolutional':
                 conv_id = conv_id + 1
                 batch_normalize = int(block['batch_normalize'])
@@ -448,3 +485,12 @@ class Darknet(nn.Module):
             else:
                 print('unknown type %s' % (block['type']))
         fp.close()
+
+if __name__ == '__main__':
+    import cfg
+    import torchsummary
+
+    cfg.parse_cfg
+    model = Darknet('cfg/chexdet.cfg', use_cuda=False)
+    torchsummary.summary(model, (3, 224, 224))
+    # print(model)
