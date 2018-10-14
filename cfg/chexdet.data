@@ -1,5 +1,5 @@
-train  = data/train.txt
-valid  = data/test.txt
-names = data/chexdet.names
+train  = train_jpg/train.txt
+valid  = train_jpg/test.txt
+names = train_jpg/chexdet.names
 backup = backup
 gpus  = 0,1,2,3
