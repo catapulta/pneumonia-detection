@@ -366,7 +366,7 @@ if __name__ == '__main__':
                         type=str, default='cfg/sketch.data', help='data definition file')
     parser.add_argument('--config', '-c',
                         type=str, default='cfg/sketch.cfg', help='network configuration file')
-    parser.add_argument('--weights', '-w',
+    parser.add_argument('--weights', '-w', default='',
                         type=str, help='initial weights file')
     parser.add_argument('--initeval', '-i', dest='init_eval', action='store_true',
                         help='performs inital evalulation')
