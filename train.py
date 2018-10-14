@@ -102,7 +102,7 @@ def main():
 
     global model
     model = Darknet(cfgfile, use_cuda=use_cuda)
-    if weightfile is not None:
+    if weightfile is not None and not weightfile == '':
         model.load_weights(weightfile)
 
     # model.print_network()
