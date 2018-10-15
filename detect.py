@@ -114,7 +114,7 @@ def isfloat(s):
         return False
 
 if __name__ == '__main__':
-    if len(sys.argv) == 5:
+    if len(sys.argv) >= 5:
         cfgfile = sys.argv[1]
         weightfile = sys.argv[2]
         imgfile = sys.argv[3]
