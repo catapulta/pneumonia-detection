@@ -9,7 +9,7 @@ from darknet import Darknet
 namesfile = None
 
 
-def detect(cfgfile, weightfile, imgfile, conf_threshold):
+def detect(cfgfile, weightfile, imgfile, conf_threshold, nms_threshold):
     m = Darknet(cfgfile)
 
     m.print_network()
@@ -31,7 +31,7 @@ def detect(cfgfile, weightfile, imgfile, conf_threshold):
     sized = letterbox_image(img, m.width, m.height)
 
     start = time.time()
-    boxes = do_detect(m, sized, conf_threshold, 0.4, use_cuda)
+    boxes = do_detect(m, sized, conf_threshold, nms_threshold, use_cuda)
     correct_yolo_boxes(boxes, img.width, img.height, m.width, m.height)
 
     finish = time.time()
@@ -41,7 +41,7 @@ def detect(cfgfile, weightfile, imgfile, conf_threshold):
     plot_boxes(img, boxes, 'predictions.jpg', class_names)
 
 
-def detect_cv2(cfgfile, weightfile, imgfile, conf_threshold):
+def detect_cv2(cfgfile, weightfile, imgfile, conf_threshold, nms_threshold):
     import cv2
     m = Darknet(cfgfile)
 
@@ -66,7 +66,7 @@ def detect_cv2(cfgfile, weightfile, imgfile, conf_threshold):
 
     for i in range(2):
         start = time.time()
-        boxes = do_detect(m, sized, conf_threshold, 0.4, use_cuda)
+        boxes = do_detect(m, sized, conf_threshold, nms_threshold, use_cuda)
         finish = time.time()
         if i == 1:
             print('%s: Predicted in %f seconds.' % (imgfile, (finish - start)))
@@ -75,7 +75,7 @@ def detect_cv2(cfgfile, weightfile, imgfile, conf_threshold):
     plot_boxes_cv2(img, boxes, savename='predictions.jpg', class_names=class_names)
 
 
-def detect_skimage(cfgfile, weightfile, imgfile, conf_threshold):
+def detect_skimage(cfgfile, weightfile, imgfile, conf_threshold, nms_threshold):
     from skimage import io
     from skimage.transform import resize
     m = Darknet(cfgfile)
@@ -100,7 +100,7 @@ def detect_skimage(cfgfile, weightfile, imgfile, conf_threshold):
 
     for i in range(2):
         start = time.time()
-        boxes = do_detect(m, sized, conf_threshold, 0.4, use_cuda)
+        boxes = do_detect(m, sized, conf_threshold, nms_threshold, use_cuda)
         finish = time.time()
         if i == 1:
             print('%s: Predicted in %f seconds.' % (imgfile, (finish - start)))
@@ -125,10 +125,11 @@ if __name__ == '__main__':
         imgfile = sys.argv[3]
         globals()["namesfile"] = sys.argv[4]
         conf_threshold = float(sys.argv[5]) if isfloat(sys.argv[5]) and float(sys.argv[5]) <= 1 else 0.5
-        detect(cfgfile, weightfile, imgfile, conf_threshold)
+        nms_threshold = float(sys.argv[5]) if isfloat(sys.argv[6]) and float(sys.argv[6]) <= 1 else 0.5
+        detect(cfgfile, weightfile, imgfile, conf_threshold, nms_threshold)
         # detect_cv2(cfgfile, weightfile, imgfile)
         # detect_skimage(cfgfile, weightfile, imgfile)
     else:
         print('Usage: ')
-        print('  python detect.py cfgfile weightfile imgfile names confidence_threshold')
+        print('  python detect.py cfgfile weightfile imgfile names confidence_threshold nms_threshold')
         # detect('cfg/tiny-yolo-voc.cfg', 'tiny-yolo-voc.weights', 'data/person.jpg', version=1)
