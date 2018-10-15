@@ -96,7 +96,7 @@ def detect_skimage(cfgfile, weightfile, imgfile):
     
     for i in range(2):
         start = time.time()
-        boxes = do_detect(m, sized, 0.5, 0.4, use_cuda)
+        boxes = do_detect(m, sized, conf_threshold, 0.4, use_cuda)
         finish = time.time()
         if i == 1:
             print('%s: Predicted in %f seconds.' % (imgfile, (finish-start)))
@@ -104,16 +104,26 @@ def detect_skimage(cfgfile, weightfile, imgfile):
     class_names = load_class_names(namesfile)
     plot_boxes_cv2(img, boxes, savename='predictions.jpg', class_names=class_names)
 
+
+def isfloat(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        print('Confidence Interval could not be transformed to float')
+        return False
+
 if __name__ == '__main__':
     if len(sys.argv) == 5:
         cfgfile = sys.argv[1]
         weightfile = sys.argv[2]
         imgfile = sys.argv[3]
         globals()["namesfile"] = sys.argv[4]
+        conf_threshold = float(sys.argv[5]) if isfloat(sys.argv[5]) and float(sys.argv[5]) <= 1 else 0.5
         detect(cfgfile, weightfile, imgfile)
         #detect_cv2(cfgfile, weightfile, imgfile)
         #detect_skimage(cfgfile, weightfile, imgfile)
     else:
         print('Usage: ')
-        print('  python detect.py cfgfile weightfile imgfile names')
+        print('  python detect.py cfgfile weightfile imgfile names confidence_threshold')
         #detect('cfg/tiny-yolo-voc.cfg', 'tiny-yolo-voc.weights', 'data/person.jpg', version=1)
