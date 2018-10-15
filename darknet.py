@@ -499,5 +499,5 @@ if __name__ == '__main__':
 
     cfg.parse_cfg
     model = Darknet('cfg/chexdet.cfg', use_cuda=False)
-    torchsummary.summary(model, (3, 224, 224))
+    torchsummary.summary(model, (3, 416, 416))
     # print(model)
