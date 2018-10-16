@@ -13,27 +13,31 @@ from cfg import parse_cfg
 from darknet import Darknet
 import argparse
 from image import correct_yolo_boxes
+import pickle
 
 # etc parameters
 use_cuda = True
 seed = 22222
 eps = 1e-5
 
-# Test parameters
-conf_thresh = 0.25
-nms_thresh = 0.4
-iou_thresh = 0.5
-
 FLAGS = None
 
 
 def main():
+    # Validation parameters
+    conf_thresh = FLAGS.conf_threshold
+    nms_thresh = FLAGS.nms_threshold
+    iou_thresh = FLAGS.iou_threshold
+
+    # output file
+    out_path = FLAGS.out_path
+
     # Training settings
     datacfg = FLAGS.data
     cfgfile = FLAGS.config
 
     data_options = read_data_cfg(datacfg)
-    testlist = data_options['valid']
+    file_list = data_options['valid']
     gpus = data_options['gpus']  # e.g. 0,1,2,3
     ngpus = len(gpus.split(','))
 
@@ -59,13 +63,12 @@ def main():
 
     kwargs = {'num_workers': num_workers, 'pin_memory': True} if use_cuda else {}
 
-    global test_loader
-    test_loader = torch.utils.data.DataLoader(
-        dataset.listDataset(testlist, shape=(init_width, init_height),
-                            shuffle=False,
+    val_loader = torch.utils.data.DataLoader(
+        dataset.listDataset(file_list, shape=(init_width, init_height),
+                            shuffle=False, jitter=False,
                             transform=transforms.Compose([
                                 transforms.ToTensor(),
-                            ]), train=False),
+                            ]), validate=True),
         batch_size=batch_size, shuffle=False, **kwargs)
 
     if use_cuda:
@@ -76,10 +79,10 @@ def main():
     for w in FLAGS.weights:
         model.load_weights(w)
         logging('evaluating ... %s' % (w))
-        test()
+        test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path)
 
 
-def test():
+def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
     def truths_length(truths):
         for i in range(50):
             if truths[i][1] == 0:
@@ -91,16 +94,18 @@ def test():
     total = 0.0
     proposals = 0.0
     correct = 0.0
+    out_boxes = []
     device = torch.device("cuda" if use_cuda else "cpu")
 
     if model.net_name() == 'region':  # region_layer
         shape = (0, 0)
     else:
         shape = (model.width, model.height)
-    for data, target, org_w, org_h in test_loader:
+    for imgpath, data, target, org_w, org_h in val_loader:
         data = data.to(device)
         output = model(data)
         all_boxes = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda)
+        out_boxes.append([imgpath, target, all_boxes])
 
         for k in range(len(all_boxes)):
             boxes = all_boxes[k]
@@ -128,7 +133,8 @@ def test():
     recall = 1.0 * correct / (total + eps)
     fscore = 2.0 * precision * recall / (precision + recall + eps)
     logging("correct: %d, precision: %f, recall: %f, fscore: %f" % (correct, precision, recall, fscore))
-
+    with open(out_path, 'wb') as f:
+        pickle.dump(out_boxes, f)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -138,6 +144,12 @@ if __name__ == '__main__':
                         default='cfg/sketch.cfg', help='network configuration file')
     parser.add_argument('--weights', '-w', type=str, nargs='+',
                         default=['weights/yolov3.weights'], help='initial weights file')
+    parser.add_argument('--conf_threshold', type=float, default=0.25, help='confidence threshold')
+    parser.add_argument('--nms_threshold', type=float, default=0.4, help='nms threshold')
+    parser.add_argument('--iou_threshold', type=float, default=0.5, help='IOU threshold for metrics')
+    parser.add_argument('--out_path', '-o', type=str,
+                        help='path to write box predictions in the shape (num_batches, batch_size) where each of these'
+                             ' contains img paths, gt bb and predicted bb')
     FLAGS, _ = parser.parse_known_args()
 
     main()

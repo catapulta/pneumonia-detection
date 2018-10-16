@@ -125,7 +125,7 @@ if __name__ == '__main__':
         imgfile = sys.argv[3]
         globals()["namesfile"] = sys.argv[4]
         conf_threshold = float(sys.argv[5]) if isfloat(sys.argv[5]) and float(sys.argv[5]) <= 1 else 0.5
-        nms_threshold = float(sys.argv[5]) if isfloat(sys.argv[6]) and float(sys.argv[6]) <= 1 else 0.5
+        nms_threshold = float(sys.argv[5]) if isfloat(sys.argv[6]) and float(sys.argv[6]) <= 1 else 0.4
         detect(cfgfile, weightfile, imgfile, conf_threshold, nms_threshold)
         # detect_cv2(cfgfile, weightfile, imgfile)
         # detect_skimage(cfgfile, weightfile, imgfile)
