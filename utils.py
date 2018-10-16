@@ -123,8 +123,13 @@ def get_all_boxes(output, netshape, conf_thresh, num_classes, only_objectness=1,
         anchors = output[i]['a'].chunk(nw)[0]
         num_anchors = output[i]['n'].data[0].item()
 
-        b = get_region_boxes(pred, netshape, conf_thresh, num_classes, anchors, num_anchors,
-                             only_objectness=only_objectness, validation=validation, use_cuda=use_cuda)
+        if output_confidence:
+            b, cls_confs = get_region_boxes(pred, netshape, conf_thresh, num_classes, anchors, num_anchors,
+                                            only_objectness=only_objectness, validation=validation, use_cuda=use_cuda,
+                                            output_confidence=True)
+        else:
+            b = get_region_boxes(pred, netshape, conf_thresh, num_classes, anchors, num_anchors,
+                                 only_objectness=only_objectness, validation=validation, use_cuda=use_cuda)
         for t in range(tot):
             all_boxes[t] += b[t]
     if output_confidence:
