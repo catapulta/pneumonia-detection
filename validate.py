@@ -105,7 +105,7 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
         data = data.to(device)
         output = model(data)
         all_boxes, cls_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda, output_confidence=True)
-        out_boxes.append([imgpath, target.cpu().numpy(), all_boxes.cpu().numpy(), cls_confs.cpu().numpy()])
+        out_boxes.append([imgpath, target.cpu().numpy(), all_boxes.cpu().numpy(), cls_confs])
 
         for k in range(len(all_boxes)):
             boxes = all_boxes[k]
