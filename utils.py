@@ -124,7 +124,7 @@ def get_all_boxes(output, netshape, conf_thresh, num_classes, only_objectness=1,
         num_anchors = output[i]['n'].data[0].item()
 
         if output_confidence:
-            b, cls_confs = get_region_boxes(pred, netshape, conf_thresh, num_classes, anchors, num_anchors,
+            b, det_confs = get_region_boxes(pred, netshape, conf_thresh, num_classes, anchors, num_anchors,
                                             only_objectness=only_objectness, validation=validation, use_cuda=use_cuda,
                                             output_confidence=True)
         else:
@@ -133,7 +133,7 @@ def get_all_boxes(output, netshape, conf_thresh, num_classes, only_objectness=1,
         for t in range(tot):
             all_boxes[t] += b[t]
     if output_confidence:
-        return all_boxes, cls_confs
+        return all_boxes, det_confs
     else:
         return all_boxes
 
@@ -171,8 +171,10 @@ def get_region_boxes(output, netshape, conf_thresh, num_classes, anchors, num_an
 
     xs, ys = torch.sigmoid(output[0]) + grid_x, torch.sigmoid(output[1]) + grid_y
     ws, hs = torch.exp(output[2]) * anchor_w.detach(), torch.exp(output[3]) * anchor_h.detach()
+    # objectness score
     det_confs = torch.sigmoid(output[4])
 
+    # class scores
     # by ysyun, dim=1 means input is 2D or even dimension else dim=0
     cls_confs = torch.nn.Softmax(dim=1)(output[5:5 + num_classes].transpose(0, 1)).detach()
     cls_max_confs, cls_max_ids = torch.max(cls_confs, 1)
@@ -224,7 +226,7 @@ def get_region_boxes(output, netshape, conf_thresh, num_classes, anchors, num_an
         print('      boxes filter : %f' % (t3 - t2))
         print('---------------------------------')
     if output_confidence:
-        return all_boxes, cls_confs
+        return all_boxes, det_confs
     else:
         return all_boxes
 
