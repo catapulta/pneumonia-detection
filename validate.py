@@ -13,7 +13,7 @@ from cfg import parse_cfg
 from darknet import Darknet
 import argparse
 from image import correct_yolo_boxes
-import pickle
+import pdb
 
 # etc parameters
 use_cuda = True
@@ -101,11 +101,18 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
         shape = (0, 0)
     else:
         shape = (model.width, model.height)
-    for imgpath, data, target, org_w, org_h in val_loader:
+    for i, (imgpath, data, target, org_w, org_h) in enumerate(val_loader):
+        print('Cumputing boxes for image', i)
         data = data.to(device)
         output = model(data)
         all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda, output_confidence=True)
-        out_boxes.append([imgpath, target.cpu().numpy(), all_boxes, det_confs])
+        temp_boxes = []
+        for k in range(len(all_boxes)):
+            boxes = np.array(nms(all_boxes[k], nms_thresh))
+            boxes = boxes[boxes[:, 4] > conf_thresh]
+            temp_boxes.append(boxes)
+        temp_boxes = np.concatenate(temp_boxes)
+        out_boxes.append([imgpath, target.cpu().numpy(), temp_boxes])
 
     #     for k in range(len(all_boxes)):
     #         boxes = all_boxes[k]
