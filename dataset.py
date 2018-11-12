@@ -15,6 +15,7 @@ class listDataset(Dataset):
     def __init__(self, root, shape, shuffle=True, crop=False, jitter=0.3, hue=0.1, saturation=1.5, exposure=1.5,
                  transform=None, target_transform=None, train=False, validate=False, seen=0, batch_size=64, num_workers=4):
         self.train = train
+        self.validate = validate
         if self.train and self.validate:
             raise ValueError('Cannot validate and train at the same time.')
         with open(root, 'r') as file:
@@ -26,7 +27,6 @@ class listDataset(Dataset):
         self.nSamples = len(self.lines)
         self.transform = transform
         self.target_transform = target_transform
-        self.validate = validate
         self.shape = shape
         self.seen = seen
         self.batch_size = batch_size
