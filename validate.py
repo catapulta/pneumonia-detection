@@ -107,39 +107,39 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
         all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda, output_confidence=True)
         out_boxes.append([imgpath, target.cpu().numpy(), all_boxes, det_confs])
 
-        for k in range(len(all_boxes)):
-            boxes = all_boxes[k]
-            correct_yolo_boxes(boxes, org_w[k], org_h[k], model.width, model.height)
-            boxes = np.array(nms(boxes, nms_thresh))
-            truths = target[k].view(-1, 5)
-            num_gts = truths_length(truths)
-            total = total + num_gts
-            num_pred = len(boxes)
-            if num_pred == 0:
-                continue
+    #     for k in range(len(all_boxes)):
+    #         boxes = all_boxes[k]
+    #         correct_yolo_boxes(boxes, org_w[k], org_h[k], model.width, model.height)
+    #         boxes = np.array(nms(boxes, nms_thresh))
+    #         truths = target[k].view(-1, 5)
+    #         num_gts = truths_length(truths)
+    #         total = total + num_gts
+    #         num_pred = len(boxes)
+    #         if num_pred == 0:
+    #             continue
+    #
+    #         proposals += int((boxes[:, 4] > conf_thresh).sum())
+    #         for i in range(num_gts):
+    #             gt_boxes = torch.FloatTensor(
+    #                 [truths[i][1], truths[i][2], truths[i][3], truths[i][4], 1.0, 1.0, truths[i][0]])
+    #             gt_boxes = gt_boxes.repeat(num_pred, 1).t()
+    #             pred_boxes = torch.FloatTensor(boxes).t()
+    #             best_iou, best_j = torch.max(multi_bbox_ious(gt_boxes, pred_boxes, x1y1x2y2=False), 0)
+    #             # pred_boxes and gt_boxes are transposed for torch.max
+    #             if best_iou > iou_thresh and pred_boxes[6][best_j] == gt_boxes[6][0]:
+    #                 correct += 1
+    #
+    # precision = 1.0 * correct / (proposals + eps)
+    # recall = 1.0 * correct / (total + eps)
+    # fscore = 2.0 * precision * recall / (precision + recall + eps)
+    # logging("correct: %d, precision: %f, recall: %f, fscore: %f" % (correct, precision, recall, fscore))
+    np.save(out_path, np.array(out_boxes))
 
-            proposals += int((boxes[:, 4] > conf_thresh).sum())
-            for i in range(num_gts):
-                gt_boxes = torch.FloatTensor(
-                    [truths[i][1], truths[i][2], truths[i][3], truths[i][4], 1.0, 1.0, truths[i][0]])
-                gt_boxes = gt_boxes.repeat(num_pred, 1).t()
-                pred_boxes = torch.FloatTensor(boxes).t()
-                best_iou, best_j = torch.max(multi_bbox_ious(gt_boxes, pred_boxes, x1y1x2y2=False), 0)
-                # pred_boxes and gt_boxes are transposed for torch.max
-                if best_iou > iou_thresh and pred_boxes[6][best_j] == gt_boxes[6][0]:
-                    correct += 1
-
-    precision = 1.0 * correct / (proposals + eps)
-    recall = 1.0 * correct / (total + eps)
-    fscore = 2.0 * precision * recall / (precision + recall + eps)
-    logging("correct: %d, precision: %f, recall: %f, fscore: %f" % (correct, precision, recall, fscore))
-    with open(out_path, 'wb') as f:
-        pickle.dump(out_boxes, f)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '-d', type=str,
-                        default='cfg/sketch.data', help='data definition file')
+                        default='cfg/sketch.data', help='data definition file, will validate over "valid" file')
     parser.add_argument('--config', '-c', type=str,
                         default='cfg/sketch.cfg', help='network configuration file')
     parser.add_argument('--weights', '-w', type=str, nargs='+',
