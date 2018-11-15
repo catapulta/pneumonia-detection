@@ -94,7 +94,6 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
     total = 0.0
     proposals = 0.0
     correct = 0.0
-    out_boxes = []
     device = torch.device("cuda" if use_cuda else "cpu")
 
     if model.net_name() == 'region':  # region_layer
@@ -112,7 +111,8 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
             boxes = boxes[boxes[:, 4] > conf_thresh]
             temp_boxes.append(boxes)
         temp_boxes = np.concatenate(temp_boxes)
-        out_boxes.append([imgpath, target.cpu().numpy(), temp_boxes])
+        out_boxes = np.array([imgpath, target.cpu().numpy(), temp_boxes])
+        np.save(out_path + str(i), out_boxes)
 
     #     for k in range(len(all_boxes)):
     #         boxes = all_boxes[k]
@@ -140,7 +140,7 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
     # recall = 1.0 * correct / (total + eps)
     # fscore = 2.0 * precision * recall / (precision + recall + eps)
     # logging("correct: %d, precision: %f, recall: %f, fscore: %f" % (correct, precision, recall, fscore))
-    np.save(out_path, np.array(out_boxes))
+    # np.save(out_path, np.array(out_boxes))
 
 
 if __name__ == '__main__':
