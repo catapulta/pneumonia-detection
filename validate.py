@@ -43,7 +43,7 @@ def main():
 
     num_workers = int(data_options['num_workers'])
     # for testing, batch_size is setted to 1 (one)
-    batch_size = 1  # int(net_options['batch'])
+    batch_size = 64  # int(net_options['batch'])
 
     global use_cuda
     use_cuda = torch.cuda.is_available() and (True if use_cuda is None else use_cuda)
@@ -79,10 +79,10 @@ def main():
     for w in FLAGS.weights:
         model.load_weights(w)
         logging('evaluating ... %s' % (w))
-        test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path)
+        test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size)
 
 
-def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
+def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
     def truths_length(truths):
         for i in range(50):
             if truths[i][1] == 0:
@@ -101,7 +101,7 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path):
     else:
         shape = (model.width, model.height)
     for i, (imgpath, data, target, org_w, org_h) in enumerate(val_loader):
-        print('Cumputing boxes for image', i)
+        print('Cumputing boxes for batch', i, 'of size', batch_size, '. Number computed is:', i*batch_size)
         data = data.to(device)
         output = model(data)
         all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda, output_confidence=True)
