@@ -107,8 +107,10 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
         all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda, output_confidence=True)
         temp_boxes = []
         for k in range(len(all_boxes)):
-            boxes = np.array(nms(all_boxes[k], nms_thresh))
+            boxes = np.array(all_boxes)
             boxes = boxes[boxes[:, 4] > conf_thresh]
+            boxes = nms(boxes[k], nms_thresh)
+
             temp_boxes.append(boxes)
         temp_boxes = np.concatenate(temp_boxes)
         out_boxes = np.array([imgpath, target.cpu().numpy(), temp_boxes])
