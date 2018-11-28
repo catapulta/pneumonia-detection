@@ -156,7 +156,7 @@ def main():
                 nsamples = train(epoch)
                 if epoch % save_interval == 0:
                     savemodel(epoch, nsamples)
-                    torch.save(model.state_dict(), "/content/drive/My Drive/Kaggle Independent Study/models/{}.pt".format(self.epochs))
+                    # torch.save(model.state_dict(), "/content/drive/My Drive/Kaggle Independent Study/models/{}.pt".format(self.epochs))
                 if not no_eval and epoch >= test_interval and (epoch % test_interval) == 0:
                     print('>> intermittent evaluating ...')
                     fscore = test(epoch)
