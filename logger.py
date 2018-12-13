@@ -3,7 +3,7 @@ import tensorflow as tf
 
 
 class Logger(object):
-    """Logging in tensorboard without tensorflow ops."""
+    """Logging in tensorboard without tensorflow ops.a"""
 
     def __init__(self, log_dir):
         self.writer = tf.summary.FileWriter(log_dir)
