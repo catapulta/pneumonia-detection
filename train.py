@@ -14,6 +14,8 @@ from image import correct_yolo_boxes
 from cfg import parse_cfg
 from darknet import Darknet
 import argparse
+import logging
+
 
 FLAGS = None
 unparsed = None
@@ -84,6 +86,8 @@ def main():
     globals()["steps"] = [float(step) for step in net_options['steps'].split(',')]
     globals()["scales"] = [float(scale) for scale in net_options['scales'].split(',')]
 
+    tLog, vLog = logger.Logger("./logs/train_pytorch"), logger.Logger("./logs/val_pytorch")
+
     # Train parameters
     global max_epochs
     try:
@@ -153,10 +157,22 @@ def main():
             else:
                 mfscore = 0.5
             for epoch in range(init_epoch + 1, max_epochs + 1):
-                nsamples = train(epoch)
+                nsamples, loss = train(epoch)
                 if epoch % save_interval == 0:
                     savemodel(epoch, nsamples)
-                    torch.save(model.state_dict(), "/content/drive/My Drive/Kaggle Independent Study/models/{}.pt".format(epoch))
+                    torch.save(model.state_dict(), "models/{}.pt".format(epoch))
+
+                # log loss
+                tLog.log_scalar('training_loss', loss, epoch)
+                # log values and gradients of parameters (histogram summary)
+                for tag, value in model.named_parameters():
+                    tag = tag.replace('.', '/')
+                    tLog.log_histogram(tag, value.data.cpu().detach().numpy(), epoch)
+                    if value.grad is not None:
+                        tLog.log_histogram(tag + '/grad', value.grad.data.cpu().numpy(), epoch)
+                    else:
+                        print('Parameter', tag, 'has no gradient.')
+
                 if not no_eval and epoch >= test_interval and (epoch % test_interval) == 0:
                     print('>> intermittent evaluating ...')
                     fscore = test(epoch)
@@ -219,6 +235,7 @@ def train(epoch):
     model.train()
     t1 = time.time()
     avg_time = torch.zeros(9)
+    loss, n_obs = 0., 0
     for batch_idx, (data, target) in enumerate(train_loader):
         t2 = time.time()
         adjust_learning_rate(optimizer, processed_batches)
@@ -248,6 +265,8 @@ def train(epoch):
         #    l.backward(retain_graph=True if i < len(org_loss)-1 else False)
         # org_loss.reverse()
         sum(org_loss).backward()
+
+        loss += float(sum(org_loss))
 
         nn.utils.clip_grad_norm_(model.parameters(), 10000)
         # for p in model.parameters():
@@ -286,7 +305,8 @@ def train(epoch):
     t1 = time.time()
     nsamples = len(train_loader.dataset)
     logging('[%03d] training with %f samples/s' % (epoch, nsamples / (t1 - t0)))
-    return nsamples
+    loss = loss / nsamples
+    return nsamples, loss
 
 
 def savemodel(epoch, nsamples, curmax=False):
