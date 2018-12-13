@@ -14,7 +14,7 @@ from image import correct_yolo_boxes
 from cfg import parse_cfg
 from darknet import Darknet
 import argparse
-import logging
+import logger
 
 
 FLAGS = None
