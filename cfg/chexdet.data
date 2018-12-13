@@ -2,5 +2,5 @@ train  = data/train_jpg/train.txt
 valid  = data/train_jpg/test.txt
 names = data/train_jpg/chexdet.names
 backup = backup
-gpus  = 0,1,2,3
+gpus  = 0
 num_workers = 0
