@@ -505,5 +505,8 @@ if __name__ == '__main__':
 
     cfg.parse_cfg
     model = Darknet('cfg/chexdet.cfg', use_cuda=False)
-    torchsummary.summary(model, (3, 416, 416))
+    for i,j in model.named_parameters():
+        print(i)
+    print(model(torch.ones(1, 3, 416, 416)))
+    # torchsummary.summary(model, (3, 416, 416))
     # print(model)

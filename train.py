@@ -107,7 +107,17 @@ def main():
     global model
     model = Darknet(cfgfile, use_cuda=use_cuda)
     if weightfile is not None and not weightfile == '':
-        model.load_weights(weightfile)
+        # model.load_weights(weightfile)
+        checkpoint = torch.load(weightfile)
+        # because of previous data saving errors
+        if checkpoint.get('optimizer_state_dict'):
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            init_epoch = checkpoint['epoch']
+        else:
+            model.load_state_dict(checkpoint)
+            init_epoch = 30
+
 
     # model.print_network()
 
@@ -116,8 +126,8 @@ def main():
     if FLAGS.reset:
         model.seen = 0
         init_epoch = 0
-    else:
-        init_epoch = model.seen // nsamples
+    # else:
+    #     init_epoch = model.seen // nsamples
 
     global loss_layers
     loss_layers = model.loss_layers
@@ -159,8 +169,13 @@ def main():
             for epoch in range(init_epoch + 1, max_epochs + 1):
                 nsamples, loss = train(epoch)
                 if epoch % save_interval == 0:
-                    savemodel(epoch, nsamples)
-                    torch.save(model.state_dict(), "models/{}.pt".format(epoch))
+                    # savemodel(epoch, nsamples)
+                    torch.save({
+                        'epoch': epoch,
+                        'model_state_dict': model.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'loss': loss},
+                        "models/{}.pt".format(epoch))
 
                 # log loss
                 tLog.log_scalar('training_loss', loss, epoch)

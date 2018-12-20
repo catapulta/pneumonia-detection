@@ -43,7 +43,7 @@ def main():
 
     num_workers = int(data_options['num_workers'])
     # for testing, batch_size is setted to 1 (one)
-    batch_size = 64  # int(net_options['batch'])
+    batch_size = 1  # int(net_options['batch'])
 
     global use_cuda
     use_cuda = torch.cuda.is_available() and (True if use_cuda is None else use_cuda)
@@ -146,6 +146,7 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
 
 
 if __name__ == '__main__':
+    # python validate.py -c cfg/chexdet.cfg -w backup/000015.weights -d cfg/chexdet.data --conf_threshold 0.001 -o 'data/out/'
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '-d', type=str,
                         default='cfg/sketch.data', help='data definition file, will validate over "valid" file')
