@@ -43,7 +43,7 @@ def main():
 
     num_workers = int(data_options['num_workers'])
     # for testing, batch_size is set to 1 (one)
-    batch_size = 1  # int(net_options['batch'])
+    batch_size = FLAGS.batch_size
 
     global use_cuda
     use_cuda = torch.cuda.is_available() and (True if use_cuda is None else use_cuda)
@@ -77,7 +77,10 @@ def main():
             model = model.module
     model = model.to(torch.device("cuda" if use_cuda else "cpu"))
     for w in FLAGS.weights:
-        model.load_weights(w)
+        # model.load_weights(w)
+        checkpoint = torch.load(w)
+        # because of previous data saving errors
+        model.load_state_dict(checkpoint)
         logging('evaluating ... %s' % (w))
         test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size)
 
@@ -101,10 +104,11 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
     else:
         shape = (model.width, model.height)
     for i, (imgpath, data, target, org_w, org_h) in enumerate(val_loader):
-        print('Cumputing boxes for batch', i, 'of size', batch_size, '. Number computed is:', i*batch_size)
+        print('Cumputing boxes for batch', i, 'of size', batch_size, '. Number computed is:', i * batch_size)
         data = data.to(device)
         output = model(data)
-        all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda, output_confidence=True)
+        all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda,
+                                             output_confidence=True)
         temp_boxes = []
         for k in range(len(all_boxes)):
             boxes = np.array(all_boxes[k])
@@ -146,14 +150,14 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
 
 
 if __name__ == '__main__':
-    # python validate.py -c cfg/chexdet.cfg -w backup/000015.weights -d cfg/chexdet.data --conf_threshold 0.001 -o 'data/out/'
+    # python validate.py -c cfg/chexdet.cfg -w backup/15.pt -d cfg/chexdet.data --conf_threshold 0.001 -o data/out/ -b 1
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '-d', type=str,
                         default='cfg/sketch.data', help='data definition file, will validate over "valid" file')
     parser.add_argument('--config', '-c', type=str,
                         default='cfg/sketch.cfg', help='network configuration file')
     parser.add_argument('--weights', '-w', type=str, nargs='+',
-                        default=['weights/yolov3.weights'], help='initial weights file')
+                        default=['backup/15.pt'], help='weights')
     parser.add_argument('--conf_threshold', type=float, default=0.25, help='confidence threshold')
     parser.add_argument('--nms_threshold', type=float, default=0.4, help='nms threshold')
     parser.add_argument('--iou_threshold', type=float, default=0.5, help='IOU threshold for metrics')
