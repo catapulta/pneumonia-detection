@@ -42,7 +42,7 @@ def main():
     ngpus = len(gpus.split(','))
 
     num_workers = int(data_options['num_workers'])
-    # for testing, batch_size is setted to 1 (one)
+    # for testing, batch_size is set to 1 (one)
     batch_size = 1  # int(net_options['batch'])
 
     global use_cuda
@@ -160,6 +160,7 @@ if __name__ == '__main__':
     parser.add_argument('--out_path', '-o', type=str,
                         help='path to write box predictions in the shape (num_batches, batch_size) where each of these'
                              ' contains img paths, gt bb and predicted bb')
+    parser.add_argument('--batch_size', '-b', type=int, default=16)
     FLAGS, _ = parser.parse_known_args()
 
     main()
