@@ -175,7 +175,7 @@ def main():
                         'model_state_dict': model.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
                         'loss': loss},
-                        "models/{}.pt".format(epoch))
+                        "backup/{}.pt".format(epoch))
 
                 # log loss
                 tLog.log_scalar('training_loss', loss, epoch)
