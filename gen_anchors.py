@@ -2,6 +2,7 @@
 Created on Feb 20, 2017
 
 @author: jumabek
+from https://github.com/Jumabek/darknet_scripts
 '''
 from os import listdir
 from os.path import isfile, join
@@ -14,8 +15,8 @@ import shutil
 import random
 import math
 
-width_in_cfg_file = 416.
-height_in_cfg_file = 416.
+# width_in_cfg_file = 416.
+# height_in_cfg_file = 416.
 
 
 def IOU(x, centroids):
@@ -51,9 +52,9 @@ def write_anchors_to_file(centroids, X, anchor_file):
     anchors = centroids.copy()
     print(anchors.shape)
 
-    for i in range(anchors.shape[0]):
-        anchors[i][0] *= width_in_cfg_file / 32.
-        anchors[i][1] *= height_in_cfg_file / 32.
+    # for i in range(anchors.shape[0]):
+    #     anchors[i][0] *= width_in_cfg_file / 32.
+    #     anchors[i][1] *= height_in_cfg_file / 32.
 
     widths = anchors[:, 0]
     sorted_indices = np.argsort(widths)
@@ -136,7 +137,7 @@ def main(argv):
 
         line = line.replace('.jpg', '.txt')
         line = line.replace('.png', '.txt')
-        print(line)
+        # print(line)
         f2 = open(line)
         for line in f2.readlines():
             line = line.rstrip('\n')
