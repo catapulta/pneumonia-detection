@@ -4,19 +4,15 @@ Created on Feb 20, 2017
 @author: jumabek
 from https://github.com/Jumabek/darknet_scripts
 '''
-from os import listdir
-from os.path import isfile, join
 import argparse
-# import cv2
-import numpy as np
-import sys
 import os
-import shutil
 import random
-import math
+import sys
+from os.path import join
+import numpy as np
 
-# width_in_cfg_file = 416.
-# height_in_cfg_file = 416.
+width_in_cfg_file = 416.
+height_in_cfg_file = 416.
 
 
 def IOU(x, centroids):
@@ -52,9 +48,9 @@ def write_anchors_to_file(centroids, X, anchor_file):
     anchors = centroids.copy()
     print(anchors.shape)
 
-    # for i in range(anchors.shape[0]):
-    #     anchors[i][0] *= width_in_cfg_file / 32.
-    #     anchors[i][1] *= height_in_cfg_file / 32.
+    for i in range(anchors.shape[0]):
+        anchors[i][0] *= width_in_cfg_file
+        anchors[i][1] *= height_in_cfg_file
 
     widths = anchors[:, 0]
     sorted_indices = np.argsort(widths)
