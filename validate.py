@@ -72,7 +72,6 @@ def main():
     for w in FLAGS.weights:
         # model.load_weights(w)
         checkpoint = torch.load(w)
-        # because of previous data saving errors
         model.load_state_dict(checkpoint['model_state_dict'])
         logging('evaluating ... %s' % (w))
         test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size)
@@ -87,9 +86,6 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
 
     model.eval()
     num_classes = model.num_classes
-    total = 0.0
-    proposals = 0.0
-    correct = 0.0
     device = torch.device("cuda" if use_cuda else "cpu")
 
     if model.net_name() == 'region':  # region_layer
