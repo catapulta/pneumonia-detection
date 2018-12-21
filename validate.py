@@ -1,19 +1,12 @@
 from __future__ import print_function
-import sys
-import time
-import torch
-from torchvision import datasets, transforms
-import os
-import dataset
-import random
-import math
-import numpy as np
-from utils import get_all_boxes, multi_bbox_ious, nms, read_data_cfg, logging
-from cfg import parse_cfg
-from darknet import Darknet
 import argparse
-from image import correct_yolo_boxes
-import pdb
+import os
+import numpy as np
+import torch
+from torchvision import transforms
+import dataset
+from darknet import Darknet
+from utils import get_all_boxes, nms, read_data_cfg, logging, map_iou
 
 # etc parameters
 use_cuda = True
@@ -46,7 +39,7 @@ def main():
     batch_size = FLAGS.batch_size
 
     global use_cuda
-    use_cuda = torch.cuda.is_available() and (True if use_cuda is None else use_cuda)
+    use_cuda = torch.cuda.is_available() and use_cuda
 
     ###############
     torch.manual_seed(seed)
@@ -103,54 +96,37 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
         shape = (0, 0)
     else:
         shape = (model.width, model.height)
+    map = []
     for i, (imgpath, data, target, org_w, org_h) in enumerate(val_loader):
         print('Cumputing boxes for batch', i, 'of size', batch_size, '. Number computed is:', i * batch_size)
         data = data.to(device)
         output = model(data)
         all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda,
                                              output_confidence=True)
-        temp_boxes = []
+
         for k in range(len(all_boxes)):
             boxes = np.array(all_boxes[k])
             boxes = boxes[boxes[:, 4] > conf_thresh]
             boxes = nms(boxes, nms_thresh)
+            boxes = np.stack(boxes)
+            boxes_true = target.cpu().numpy().reshape(-1, 5)
+            boxes_true = boxes_true[boxes_true.max(1) > 0, 1:5]
+            out_boxes = np.array([imgpath, boxes_true, boxes])
+            np.save(out_path + str(i*len(imgpath) + k), out_boxes)
 
-            temp_boxes.append(boxes)
-        temp_boxes = np.concatenate(temp_boxes)
-        out_boxes = np.array([imgpath, target.cpu().numpy(), temp_boxes])
-        np.save(out_path + str(i), out_boxes)
+            boxes_pred = boxes[:, :4].copy()
+            scores = boxes[:, 4].copy()
+            boxes_pred = boxes_pred[scores > 0.03]
+            scores = scores[scores > 0.03]
+            map.append(map_iou(boxes_true, boxes_pred, scores)) if len(scores) > 0 else None
 
-    #     for k in range(len(all_boxes)):
-    #         boxes = all_boxes[k]
-    #         correct_yolo_boxes(boxes, org_w[k], org_h[k], model.width, model.height)
-    #         boxes = np.array(nms(boxes, nms_thresh))
-    #         truths = target[k].view(-1, 5)
-    #         num_gts = truths_length(truths)
-    #         total = total + num_gts
-    #         num_pred = len(boxes)
-    #         if num_pred == 0:
-    #             continue
-    #
-    #         proposals += int((boxes[:, 4] > conf_thresh).sum())
-    #         for i in range(num_gts):
-    #             gt_boxes = torch.FloatTensor(
-    #                 [truths[i][1], truths[i][2], truths[i][3], truths[i][4], 1.0, 1.0, truths[i][0]])
-    #             gt_boxes = gt_boxes.repeat(num_pred, 1).t()
-    #             pred_boxes = torch.FloatTensor(boxes).t()
-    #             best_iou, best_j = torch.max(multi_bbox_ious(gt_boxes, pred_boxes, x1y1x2y2=False), 0)
-    #             # pred_boxes and gt_boxes are transposed for torch.max
-    #             if best_iou > iou_thresh and pred_boxes[6][best_j] == gt_boxes[6][0]:
-    #                 correct += 1
-    #
-    # precision = 1.0 * correct / (proposals + eps)
-    # recall = 1.0 * correct / (total + eps)
-    # fscore = 2.0 * precision * recall / (precision + recall + eps)
-    # logging("correct: %d, precision: %f, recall: %f, fscore: %f" % (correct, precision, recall, fscore))
-    # np.save(out_path, np.array(out_boxes))
+    map = np.array(map).mean()
+    print('Validation output saved at ' + out_path)
+    print('The mAP IoU is: {}'.format(map))
 
 
 if __name__ == '__main__':
-    # python validate.py -c cfg/chexdet.cfg -w backup/15.pt -d cfg/chexdet.data --conf_threshold 0.001 -o data/out/ -b 1
+    # python validate.py -c cfg/chexdet.cfg -w backup/15.pt -d cfg/chexdet.data --conf_threshold 0.001 -o data/out/ -b 1 --nms_threshold 0.01
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '-d', type=str,
                         default='cfg/sketch.data', help='data definition file, will validate over "valid" file')
