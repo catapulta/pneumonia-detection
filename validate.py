@@ -110,7 +110,7 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
                                           'shape {}'.format(boxes_true.shape)
             boxes_true = boxes_true[50*k:50*(k+1)]
             boxes_true = boxes_true[boxes_true.max(1) > 0, 1:5]
-            out_boxes = np.array([imgpath[k], boxes_true, boxes])
+            out_boxes = np.array([[imgpath[k]], boxes_true, boxes])
             np.save(out_path + str(i*len(imgpath) + k), out_boxes)
 
             boxes_pred = boxes[:, :4].copy()
