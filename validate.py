@@ -98,7 +98,7 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
         shape = (model.width, model.height)
     map = []
     for i, (imgpath, data, target, org_w, org_h) in enumerate(val_loader):
-        print('Cumputing boxes for batch', i, 'of size', batch_size, '. Number computed is:', i * batch_size)
+        print('Computing boxes for batch', i, 'of size', batch_size, '. Number computed is:', i * batch_size)
         data = data.to(device)
         output = model(data)
         all_boxes, det_confs = get_all_boxes(output, shape, conf_thresh, num_classes, use_cuda=use_cuda,
