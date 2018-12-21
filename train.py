@@ -106,18 +106,6 @@ def main():
 
     global model
     model = Darknet(cfgfile, use_cuda=use_cuda)
-    if weightfile is not None and not weightfile == '':
-        # model.load_weights(weightfile)
-        checkpoint = torch.load(weightfile)
-        # because of previous data saving errors
-        if checkpoint.get('optimizer_state_dict'):
-            model.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            init_epoch = checkpoint['epoch']
-        else:
-            model.load_state_dict(checkpoint)
-            init_epoch = 30
-
 
     # model.print_network()
 
@@ -152,6 +140,18 @@ def main():
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()),
                           lr=learning_rate / batch_size, momentum=momentum,
                           dampening=0, weight_decay=decay * batch_size)
+
+    if weightfile is not None and not weightfile == '':
+        # model.load_weights(weightfile)
+        checkpoint = torch.load(weightfile)
+        # because of previous data saving errors
+        if checkpoint.get('optimizer_state_dict'):
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            init_epoch = checkpoint['epoch']
+        else:
+            model.load_state_dict(checkpoint)
+            init_epoch = 30
 
     if evaluate:
         logging('evaluating ...')
