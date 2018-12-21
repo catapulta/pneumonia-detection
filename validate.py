@@ -73,7 +73,7 @@ def main():
         # model.load_weights(w)
         checkpoint = torch.load(w)
         # because of previous data saving errors
-        model.load_state_dict(checkpoint)
+        model.load_state_dict(checkpoint['model_state_dict'])
         logging('evaluating ... %s' % (w))
         test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size)
 

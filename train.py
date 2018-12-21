@@ -144,14 +144,9 @@ def main():
     if weightfile is not None and not weightfile == '':
         # model.load_weights(weightfile)
         checkpoint = torch.load(weightfile)
-        # because of previous data saving errors
-        if checkpoint.get('optimizer_state_dict'):
-            model.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            init_epoch = checkpoint['epoch']
-        else:
-            model.load_state_dict(checkpoint)
-            init_epoch = 30
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        init_epoch = checkpoint['epoch']
 
     if evaluate:
         logging('evaluating ...')
