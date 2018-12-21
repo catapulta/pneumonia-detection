@@ -106,7 +106,8 @@ def test(val_loader, conf_thresh, nms_thresh, iou_thresh, out_path, batch_size):
             boxes = nms(boxes, nms_thresh)
             boxes = np.stack(boxes)
             boxes_true = target.cpu().numpy().reshape(-1, 5)
-            assert len(target) % 50 == 0, 'max_pboxes in image.py "fill_truth_detection" is different from 50'
+            assert len(boxes_true) % 50 == 0, 'max_boxes in image.py "fill_truth_detection" is different from 50 with ' \
+                                          'shape {}'.format(boxes_true.shape)
             boxes_true = boxes_true[50*k:50*(k+1)]
             boxes_true = boxes_true[boxes_true.max(1) > 0, 1:5]
             out_boxes = np.array([imgpath, boxes_true, boxes])
